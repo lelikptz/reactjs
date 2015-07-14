@@ -1,0 +1,44 @@
+.page-content {
+    padding-top: 40px;
+}
+
+.mdl-data-table {
+    margin: 0 auto 20px;
+}
+
+.timer {
+    text-align: center;
+}
+
+.mdl-data-table th {
+    position: relative;
+    cursor: pointer;
+}
+
+.mdl-data-table th:first-of-type.active:before,
+.mdl-data-table th:first-of-type:hover:before {
+    border: none;
+}
+
+.mdl-data-table th.active:before,
+.mdl-data-table th:hover:before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    position: absolute;
+    left: 0;
+    top: 23px;
+}
+
+.mdl-data-table th.desc.active:before {
+    border-top: 5px solid rgba(0,0,0, 0.47);
+    border-bottom: none;
+}
+
+.mdl-data-table th.asc.active:before,
+.mdl-data-table th:hover:before {
+    border-bottom: 5px solid rgba(0,0,0, 0.47);
+    border-top: none;
+}
