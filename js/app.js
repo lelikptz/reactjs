@@ -5,7 +5,6 @@
  */
 const ItemsList = React.createClass({displayName: "ItemsList",
 
-
     /**
      * Получаем данные с сервера
      * @returns {*[]}
@@ -162,7 +161,7 @@ const ItemsList = React.createClass({displayName: "ItemsList",
      * Отображение
      */
     render: function () {
-        var year, time, director, data = this.getDataFromServer();
+        var tdClass = '', tdClassNotNum = 'mdl-data-table__cell--non-numeric', data = this.getDataFromServer();
         var sort = this.state.sort;
         var type = this.props.type;
 
@@ -188,26 +187,22 @@ const ItemsList = React.createClass({displayName: "ItemsList",
             return React.createElement(Line, {key: line.data.id, data: line.data, type: type})
         });
 
-        if (type === 'big') {
-            year = React.createElement("th", {"data-sort": "year"}, "Премьера");
-            time = React.createElement("th", {"data-sort": "time"}, "Продолжительность");
-            director = React.createElement("th", {className: "mdl-data-table__cell--non-numeric", "data-sort": "director"}, "Режиссёр");
+        if (type === 'min') {
+            tdClassNotNum = tdClass = 'hidden';
         }
 
-        var table = React.createElement("table", {className: "mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp"}, 
+        return React.createElement("table", {className: "mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp"}, 
             React.createElement("thead", null, 
             React.createElement("tr", null, 
                 React.createElement("th", {className: "mdl-data-table__cell--non-numeric", "data-sort": "name"}, "Название"), 
-                year, 
-                time, 
-                director, 
+                React.createElement("th", {"data-sort": "year", className: tdClass}, "Премьера"), 
+                React.createElement("th", {"data-sort": "time", className: tdClass}, "Продолжительность"), 
+                React.createElement("th", {"data-sort": "director", className: tdClassNotNum}, "Режиссёр"), 
                 React.createElement("th", {"data-sort": "rating"}, "Рейтинг")
             )
             ), 
             React.createElement("tbody", null, lines)
         );
-
-        return table;
     }
 });
 
@@ -217,19 +212,17 @@ const ItemsList = React.createClass({displayName: "ItemsList",
  */
 const Line = React.createClass({displayName: "Line",
     render: function () {
-        var year, time, director;
+        var tdClass = '', tdClassNotNum = 'mdl-data-table__cell--non-numeric';
 
-        if (this.props.type === 'big') {
-            year = React.createElement("td", null, this.props.data.year, " год");
-            time = React.createElement("td", null, this.props.data.time, " мин.");
-            director = React.createElement("td", {className: "mdl-data-table__cell--non-numeric"}, this.props.data.director);
+        if (this.props.type === 'min') {
+            tdClassNotNum = tdClass = 'hidden';
         }
 
         return React.createElement("tr", null, 
             React.createElement("td", {className: "mdl-data-table__cell--non-numeric"}, this.props.data.name), 
-            year, 
-            time, 
-            director, 
+            React.createElement("td", {className: tdClass}, this.props.data.year, " год"), 
+            React.createElement("td", {className: tdClass}, this.props.data.time, " мин."), 
+            React.createElement("td", {className: tdClassNotNum}, this.props.data.director), 
             React.createElement("td", null, this.props.data.rating)
         );
     }
@@ -245,7 +238,7 @@ React.render(
 
 
 /**
- *
+ * Компонент левого меню
  */
 const Menu = React.createClass({displayName: "Menu",
     render: function () {
@@ -264,17 +257,32 @@ const Menu = React.createClass({displayName: "Menu",
     }
 });
 
+/**
+ * Пункт левого меню
+ */
 const MenuLink = React.createClass({displayName: "MenuLink",
 
     tableRender: function (e) {
         var type = e.target.getAttribute('data-type');
+
+        /**
+         * Скрываем всплывающее меню
+         */
         document.querySelector('.mdl-layout__obfuscator').click();
+
+        /**
+         * Ререндер таблицы
+         */
         React.render(
             React.createElement(ItemsList, {type: type}),
             document.querySelector('.page-content')
         );
         e.preventDefault();
     },
+
+    /**
+     * Событие на пункт меню после рендер
+     */
     componentDidMount: function () {
         this.getDOMNode().addEventListener('click', this.tableRender);
     },
@@ -283,6 +291,9 @@ const MenuLink = React.createClass({displayName: "MenuLink",
     }
 });
 
+/**
+ * Рендер левого меню
+ */
 React.render(
     React.createElement(Menu, null),
     document.querySelector('.mdl-layout__drawer')

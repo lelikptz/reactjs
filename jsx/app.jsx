@@ -5,7 +5,6 @@
  */
 const ItemsList = React.createClass({
 
-
     /**
      * Получаем данные с сервера
      * @returns {*[]}
@@ -162,7 +161,7 @@ const ItemsList = React.createClass({
      * Отображение
      */
     render: function () {
-        var year, time, director, data = this.getDataFromServer();
+        var tdClass = '', tdClassNotNum = 'mdl-data-table__cell--non-numeric', data = this.getDataFromServer();
         var sort = this.state.sort;
         var type = this.props.type;
 
@@ -188,26 +187,22 @@ const ItemsList = React.createClass({
             return <Line key={line.data.id} data={line.data} type={type}/>
         });
 
-        if (type === 'big') {
-            year = <th data-sort="year">Премьера</th>;
-            time = <th data-sort="time">Продолжительность</th>;
-            director = <th className="mdl-data-table__cell--non-numeric" data-sort="director">Режиссёр</th>;
+        if (type === 'min') {
+            tdClassNotNum = tdClass = 'hidden';
         }
 
-        var table = <table className="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp">
+        return <table className="mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp">
             <thead>
             <tr>
                 <th className="mdl-data-table__cell--non-numeric" data-sort="name">Название</th>
-                {year}
-                {time}
-                {director}
+                <th data-sort="year" className={tdClass}>Премьера</th>
+                <th data-sort="time" className={tdClass}>Продолжительность</th>
+                <th data-sort="director" className={tdClassNotNum}>Режиссёр</th>
                 <th data-sort="rating">Рейтинг</th>
             </tr>
             </thead>
             <tbody>{lines}</tbody>
         </table>;
-
-        return table;
     }
 });
 
@@ -217,19 +212,17 @@ const ItemsList = React.createClass({
  */
 const Line = React.createClass({
     render: function () {
-        var year, time, director;
+        var tdClass = '', tdClassNotNum = 'mdl-data-table__cell--non-numeric';
 
-        if (this.props.type === 'big') {
-            year = <td>{this.props.data.year} год</td>;
-            time = <td>{this.props.data.time} мин.</td>;
-            director = <td className="mdl-data-table__cell--non-numeric">{this.props.data.director}</td>;
+        if (this.props.type === 'min') {
+            tdClassNotNum = tdClass = 'hidden';
         }
 
         return <tr>
             <td className="mdl-data-table__cell--non-numeric">{this.props.data.name}</td>
-            {year}
-            {time}
-            {director}
+            <td className={tdClass}>{this.props.data.year} год</td>
+            <td className={tdClass}>{this.props.data.time} мин.</td>
+            <td className={tdClassNotNum}>{this.props.data.director}</td>
             <td>{this.props.data.rating}</td>
         </tr>;
     }
@@ -245,7 +238,7 @@ React.render(
 
 
 /**
- *
+ * Компонент левого меню
  */
 const Menu = React.createClass({
     render: function () {
@@ -264,17 +257,32 @@ const Menu = React.createClass({
     }
 });
 
+/**
+ * Пункт левого меню
+ */
 const MenuLink = React.createClass({
 
     tableRender: function (e) {
         var type = e.target.getAttribute('data-type');
+
+        /**
+         * Скрываем всплывающее меню
+         */
         document.querySelector('.mdl-layout__obfuscator').click();
+
+        /**
+         * Ререндер таблицы
+         */
         React.render(
             <ItemsList type={type}/>,
             document.querySelector('.page-content')
         );
         e.preventDefault();
     },
+
+    /**
+     * Событие на пункт меню после рендер
+     */
     componentDidMount: function () {
         this.getDOMNode().addEventListener('click', this.tableRender);
     },
@@ -283,6 +291,9 @@ const MenuLink = React.createClass({
     }
 });
 
+/**
+ * Рендер левого меню
+ */
 React.render(
     <Menu />,
     document.querySelector('.mdl-layout__drawer')
