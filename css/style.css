@@ -48,6 +48,12 @@
     margin: 10px auto;
 }
 
+.wrap form:after {
+    content: '';
+    clear: both;
+    display: table;
+}
+
 .mdl-textfield__label,
 .mdl-textfield__input {
     font-size: 13px;
@@ -56,11 +62,12 @@
 .mdl-textfield {
     width: 220px;
     margin: 0 10px;
+    float: left;
 }
 
 .mdl-textfield .mdl-button {
-    bottom: -8px;
     width: 100%;
+    bottom: -6px;
 }
 
 .mdl-textfield__input[name='director'] {

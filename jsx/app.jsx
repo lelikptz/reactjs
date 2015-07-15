@@ -3,7 +3,7 @@
 /**
  * Основной компонент формируем таблицу
  */
-const ItemsList = React.createClass({
+var ItemsList = React.createClass({
 
     /**
      * Получаем данные с сервера
@@ -281,7 +281,7 @@ const ItemsList = React.createClass({
  * Компонент формирующий строку таблицы
  * this.props.data: переданные в компонент данные
  */
-const Line = React.createClass({
+var Line = React.createClass({
     render: function () {
         return <tr>
             <td className="mdl-data-table__cell--non-numeric">{this.props.data.name}</td>
@@ -296,7 +296,7 @@ const Line = React.createClass({
 /**
  * Форма
  */
-const Form = React.createClass({
+var Form = React.createClass({
 
     /**
      * Значения по умолчанию
