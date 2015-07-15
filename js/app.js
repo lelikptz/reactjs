@@ -202,10 +202,23 @@ var ItemsList = React.createClass({displayName: "ItemsList",
      * Отображение
      */
     render: function () {
-        var data = this.state.items;
+        var lines,
+            data = this.state.items;
         var sort = this.state.sort;
-        var type = this.props.type;
+        var filter = this.props.filter;
         var direction = this.state.direction;
+
+        /**
+         * Поиск по имени
+         */
+        if (filter.length > 0) {
+            data = data.filter(function (e) {
+                var name = e.name.substr(0, filter.length).toLowerCase();
+                if (filter.toLowerCase() === name) {
+                    return true;
+                }
+            });
+        }
 
         /**
          * Формируем массив с учётом сортировки по полю field
@@ -222,12 +235,21 @@ var ItemsList = React.createClass({displayName: "ItemsList",
          */
         data.sort(this.sorting);
 
-        /**
-         * Получаем список строк на основе данных
-         */
-        var lines = data.map(function (line) {
-            return React.createElement(Line, {key: line.data.id, data: line.data, type: type})
-        });
+        if (data.length) {
+            /**
+             * Получаем список строк на основе данных
+             */
+            lines = data.map(function (line) {
+                return React.createElement(Line, {key: line.data.id, data: line.data})
+            });
+        } else {
+            /**
+             * Если ничего не найдено выводим сообщение
+             */
+            lines = React.createElement("tr", null, 
+                React.createElement("td", {className: "mdl-data-table__cell--center", colSpan: "5"}, "Ничего не найдено")
+            );
+        }
 
         var tdClassName, tdClassRating = '', tdClassYear = '', tdClassTime = '', tdClassDirector;
         tdClassName = tdClassDirector = 'mdl-data-table__cell--non-numeric';
@@ -372,7 +394,7 @@ var Form = React.createClass({displayName: "Form",
      * Вёрстка формы
      */
     render: function () {
-        return React.createElement("form", {action: "", method: "post", onSubmit: this.formSubmit}, 
+        return React.createElement("form", {action: "", method: "post", onSubmit: this.formSubmit, className: "add"}, 
             React.createElement("div", {className: "mdl-textfield name mdl-js-textfield mdl-textfield--floating-label"}, 
                 React.createElement("input", {className: "mdl-textfield__input", 
                        type: "text", 
@@ -443,9 +465,55 @@ var Form = React.createClass({displayName: "Form",
 });
 
 /**
+ * Поиск
+ */
+var Search = React.createClass({displayName: "Search",
+    getInitialState: function () {
+        return {value: ''};
+    },
+    changeInput: function (e) {
+        var val = e.target.value;
+        this.setState({value: val});
+
+        /**
+         * todo наверняка можно как-то по изящнее
+         */
+        React.render(
+            React.createElement(ItemsList, {filter: val}),
+            document.querySelector('.page-content')
+        );
+    },
+    render: function () {
+        return React.createElement("div", {className: "mdl-textfield mdl-js-textfield mdl-textfield--expandable"}, 
+            React.createElement("label", {className: "mdl-button mdl-js-button mdl-button--icon", htmlFor: "search"}, 
+                React.createElement("i", {className: "material-icons"}, "search")
+            ), 
+
+            React.createElement("div", {className: "mdl-textfield__expandable-holder"}, 
+                React.createElement("input", {
+                    className: "mdl-textfield__input", 
+                    type: "text", 
+                    id: "search", 
+                    value: this.state.value, 
+                    onChange: this.changeInput}
+                    )
+            )
+        )
+    }
+});
+
+/**
+ * Рендер поиска
+ */
+React.render(
+    React.createElement(Search, null),
+    document.querySelector('.search')
+);
+
+/**
  * Рендер таблицы на страницу
  */
 React.render(
-    React.createElement(ItemsList, {type: "big"}),
+    React.createElement(ItemsList, {filter: ""}),
     document.querySelector('.page-content')
 );

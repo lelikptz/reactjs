@@ -202,10 +202,23 @@ var ItemsList = React.createClass({
      * Отображение
      */
     render: function () {
-        var data = this.state.items;
+        var lines,
+            data = this.state.items;
         var sort = this.state.sort;
-        var type = this.props.type;
+        var filter = this.props.filter;
         var direction = this.state.direction;
+
+        /**
+         * Поиск по имени
+         */
+        if (filter.length > 0) {
+            data = data.filter(function (e) {
+                var name = e.name.substr(0, filter.length).toLowerCase();
+                if (filter.toLowerCase() === name) {
+                    return true;
+                }
+            });
+        }
 
         /**
          * Формируем массив с учётом сортировки по полю field
@@ -222,12 +235,21 @@ var ItemsList = React.createClass({
          */
         data.sort(this.sorting);
 
-        /**
-         * Получаем список строк на основе данных
-         */
-        var lines = data.map(function (line) {
-            return <Line key={line.data.id} data={line.data} type={type}/>
-        });
+        if (data.length) {
+            /**
+             * Получаем список строк на основе данных
+             */
+            lines = data.map(function (line) {
+                return <Line key={line.data.id} data={line.data}/>
+            });
+        } else {
+            /**
+             * Если ничего не найдено выводим сообщение
+             */
+            lines = <tr>
+                <td className="mdl-data-table__cell--center" colSpan="5">Ничего не найдено</td>
+            </tr>;
+        }
 
         var tdClassName, tdClassRating = '', tdClassYear = '', tdClassTime = '', tdClassDirector;
         tdClassName = tdClassDirector = 'mdl-data-table__cell--non-numeric';
@@ -372,7 +394,7 @@ var Form = React.createClass({
      * Вёрстка формы
      */
     render: function () {
-        return <form action="" method="post" onSubmit={this.formSubmit}>
+        return <form action="" method="post" onSubmit={this.formSubmit} className="add">
             <div className="mdl-textfield name mdl-js-textfield mdl-textfield--floating-label">
                 <input className="mdl-textfield__input"
                        type="text"
@@ -443,9 +465,55 @@ var Form = React.createClass({
 });
 
 /**
+ * Поиск
+ */
+var Search = React.createClass({
+    getInitialState: function () {
+        return {value: ''};
+    },
+    changeInput: function (e) {
+        var val = e.target.value;
+        this.setState({value: val});
+
+        /**
+         * todo наверняка можно как-то по изящнее
+         */
+        React.render(
+            <ItemsList filter={val}/>,
+            document.querySelector('.page-content')
+        );
+    },
+    render: function () {
+        return <div className="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
+            <label className="mdl-button mdl-js-button mdl-button--icon" htmlFor="search">
+                <i className="material-icons">search</i>
+            </label>
+
+            <div className="mdl-textfield__expandable-holder">
+                <input
+                    className="mdl-textfield__input"
+                    type="text"
+                    id="search"
+                    value={this.state.value}
+                    onChange={this.changeInput}
+                    />
+            </div>
+        </div>
+    }
+});
+
+/**
+ * Рендер поиска
+ */
+React.render(
+    <Search />,
+    document.querySelector('.search')
+);
+
+/**
  * Рендер таблицы на страницу
  */
 React.render(
-    <ItemsList type='big'/>,
+    <ItemsList filter=''/>,
     document.querySelector('.page-content')
 );

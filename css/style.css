@@ -1,3 +1,7 @@
+html, body {
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
 .mdl-data-table {
     margin: 0 auto 20px;
 }
@@ -65,7 +69,13 @@
     float: left;
 }
 
-.mdl-textfield .mdl-button {
+.search .mdl-textfield .mdl-button {
+    position: absolute;
+    bottom: 16px;
+    left: -5px;
+}
+
+.add .mdl-textfield .mdl-button {
     width: 100%;
     bottom: -6px;
 }
@@ -96,4 +106,8 @@
 
 .mdl-button--raised.mdl-button--colored.align-center {
     margin: 20px auto;
+}
+
+.mdl-data-table td.mdl-data-table__cell--center {
+    text-align: center;
 }
