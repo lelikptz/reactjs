@@ -133,10 +133,42 @@ const ItemsList = React.createClass({displayName: "ItemsList",
     },
 
     /**
+     * Добавляем новый элемент
+     */
+    addItem: function (obj) {
+        var newItem = {
+            id: this.state.items.length + 1,
+            name: obj.name,
+            year: obj.year,
+            time: obj.time,
+            director: obj.director,
+            rating: obj.rating
+        };
+        var newState = this.state.items;
+        newState.push(newItem);
+        this.setState({items: newState});
+    },
+
+    /**
+     * Очищаем localStorage и загружаем дефолтный state
+     */
+    resetLocal: function () {
+        localStorage.removeItem('itemlist');
+        this.replaceState(this.getInitialState());
+    },
+
+    /**
      * Это выполняется перед функцией render. Возвращаемый объект присваивается в this.state
+     * Данные получаем из localStorage если они там есть
      */
     getInitialState: function () {
-        return {sort: 'id', direction: 'asc'};
+        var state = {};
+        if (typeof localStorage.itemlist == 'undefined') {
+            state = {sort: 'id', direction: 'asc', items: this.getDataFromServer()};
+        } else {
+            state = JSON.parse(localStorage.itemlist);
+        }
+        return state;
     },
 
     /**
@@ -148,22 +180,32 @@ const ItemsList = React.createClass({displayName: "ItemsList",
          * Перебераем все th таблицы и вешаем на них события
          */
         [].forEach.call(document.querySelectorAll('th'), this.addEvent);
+
+        /**
+         * Сохраняем state в localStorage
+         */
+        localStorage.itemlist = JSON.stringify(this.state);
     },
 
     /**
      * вызывается react'ом, когда компонент был перерисован
      */
     componentDidUpdate: function () {
-        [].forEach.call(document.querySelectorAll('th'), this.addEvent);
+
+        /**
+         * Сохраняем state в localStorage
+         */
+        localStorage.itemlist = JSON.stringify(this.state);
     },
 
     /**
      * Отображение
      */
     render: function () {
-        var tdClass = '', tdClassNotNum = 'mdl-data-table__cell--non-numeric', data = this.getDataFromServer();
+        var data = this.state.items;
         var sort = this.state.sort;
         var type = this.props.type;
+        var direction = this.state.direction;
 
         /**
          * Формируем массив с учётом сортировки по полю field
@@ -187,21 +229,50 @@ const ItemsList = React.createClass({displayName: "ItemsList",
             return React.createElement(Line, {key: line.data.id, data: line.data, type: type})
         });
 
-        if (type === 'min') {
-            tdClassNotNum = tdClass = 'hidden';
+        var tdClassName, tdClassRating = '', tdClassYear = '', tdClassTime = '', tdClassDirector;
+        tdClassName = tdClassDirector = 'mdl-data-table__cell--non-numeric';
+
+        /**
+         * В зависимости от сортировки добаляем столбцу класс active и направление
+         */
+        switch (sort) {
+            case 'name':
+                tdClassName += ' active ' + direction;
+                break;
+            case 'year':
+                tdClassYear += ' active ' + direction;
+                break;
+            case 'time':
+                tdClassTime += ' active ' + direction;
+                break;
+            case 'director':
+                tdClassDirector += ' active ' + direction;
+                break;
+            case 'rating':
+                tdClassRating += ' active ' + direction;
+                break;
         }
 
-        return React.createElement("table", {className: "mdl-data-table mdl-js-data-table mdl-data-table--selectable mdl-shadow--2dp"}, 
-            React.createElement("thead", null, 
-            React.createElement("tr", null, 
-                React.createElement("th", {className: "mdl-data-table__cell--non-numeric", "data-sort": "name"}, "Название"), 
-                React.createElement("th", {"data-sort": "year", className: tdClass}, "Премьера"), 
-                React.createElement("th", {"data-sort": "time", className: tdClass}, "Продолжительность"), 
-                React.createElement("th", {"data-sort": "director", className: tdClassNotNum}, "Режиссёр"), 
-                React.createElement("th", {"data-sort": "rating"}, "Рейтинг")
-            )
+        return React.createElement("div", {className: "wrap"}, 
+            React.createElement(Form, {addItem: this.addItem}), 
+
+            React.createElement("table", {className: "mdl-data-table mdl-js-data-table mdl-shadow--2dp"}, 
+                React.createElement("thead", null, 
+                React.createElement("tr", null, 
+                    React.createElement("th", {"data-sort": "name", className: tdClassName}, "Название"), 
+                    React.createElement("th", {"data-sort": "year", className: tdClassYear}, "Премьера"), 
+                    React.createElement("th", {"data-sort": "time", className: tdClassTime}, "Продолжительность"), 
+                    React.createElement("th", {"data-sort": "director", className: tdClassDirector}, "Режиссёр"), 
+                    React.createElement("th", {"data-sort": "rating", className: tdClassRating}, "Рейтинг")
+                )
+                ), 
+                React.createElement("tbody", null, lines)
             ), 
-            React.createElement("tbody", null, lines)
+            React.createElement("div", {className: "bottom-button"}, 
+                React.createElement("button", {className: "mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect align-center", onClick: this.resetLocal}, 
+                    "Вернуть первоначальный список"
+                )
+            )
         );
     }
 });
@@ -212,18 +283,161 @@ const ItemsList = React.createClass({displayName: "ItemsList",
  */
 const Line = React.createClass({displayName: "Line",
     render: function () {
-        var tdClass = '', tdClassNotNum = 'mdl-data-table__cell--non-numeric';
-
-        if (this.props.type === 'min') {
-            tdClassNotNum = tdClass = 'hidden';
-        }
-
         return React.createElement("tr", null, 
             React.createElement("td", {className: "mdl-data-table__cell--non-numeric"}, this.props.data.name), 
-            React.createElement("td", {className: tdClass}, this.props.data.year, " год"), 
-            React.createElement("td", {className: tdClass}, this.props.data.time, " мин."), 
-            React.createElement("td", {className: tdClassNotNum}, this.props.data.director), 
+            React.createElement("td", null, this.props.data.year, " год"), 
+            React.createElement("td", null, this.props.data.time, " мин."), 
+            React.createElement("td", {className: "mdl-data-table__cell--non-numeric"}, this.props.data.director), 
             React.createElement("td", null, this.props.data.rating)
+        );
+    }
+});
+
+/**
+ * Форма
+ */
+const Form = React.createClass({displayName: "Form",
+
+    /**
+     * Значения по умолчанию
+     * @returns {{name: string, year: string, time: string, director: string, rating: string}}
+     */
+    getInitialState: function () {
+
+        var state = {};
+        if (typeof localStorage.form == 'undefined') {
+            state = {name: '', year: '', time: '', director: '', rating: ''};
+        } else {
+            state = JSON.parse(localStorage.form);
+        }
+        return state;
+    },
+    componentDidMount: function () {
+        localStorage.form = JSON.stringify(this.state);
+    },
+    componentDidUpdate: function () {
+        localStorage.form = JSON.stringify(this.state);
+    },
+
+    /**
+     * При изменения значения input меняем state
+     */
+    changeInput: function (e) {
+        document.querySelector('.mdl-textfield.' + e.target.name).classList.remove('react-invalid');
+        var stateObj = {};
+        stateObj[e.target.name] = e.target.value;
+        this.setState(stateObj);
+    },
+    /**
+     * Сабмит формы
+     */
+    formSubmit: function (e) {
+        var error = false;
+        for (var prop in this.state) {
+
+            /**
+             * Если input пустой, то добавляем класс react-invalid и не даём отправить форму
+             */
+            if (this.state[prop].trim() === '') {
+                document.querySelector('.mdl-textfield.' + prop).classList.add('react-invalid');
+                error = true;
+            }
+        }
+
+        if (!error) {
+
+            /**
+             * Отправляем данные формы в <Form addItem={this.addItem}/>
+             */
+            this.props.addItem(this.state);
+
+            /**
+             * У полей формы удаляем класс is-dirty
+             */
+            [].forEach.call(document.querySelectorAll('.mdl-textfield'), function (i) {
+                i.classList.remove('is-dirty');
+            });
+
+            /**
+             * В input устанавливаем значения по умолчанию
+             */
+            localStorage.removeItem('form');
+            this.replaceState(this.getInitialState());
+        }
+        e.preventDefault();
+
+    },
+
+    /**
+     * Вёрстка формы
+     */
+    render: function () {
+        return React.createElement("form", {action: "", method: "post", onSubmit: this.formSubmit}, 
+            React.createElement("div", {className: "mdl-textfield name mdl-js-textfield mdl-textfield--floating-label"}, 
+                React.createElement("input", {className: "mdl-textfield__input", 
+                       type: "text", 
+                       id: "name", 
+                       name: "name", 
+                       value: this.state.name, 
+                       onChange: this.changeInput}
+                    ), 
+                React.createElement("label", {className: "mdl-textfield__label"}, "Название...")
+            ), 
+
+            React.createElement("div", {className: "mdl-textfield year mdl-js-textfield mdl-textfield--floating-label"}, 
+                React.createElement("input", {className: "mdl-textfield__input", 
+                       type: "text", 
+                       id: "year", 
+                       name: "year", 
+                       pattern: "-?[0-9]*(\\.[0-9]+)?", 
+                       value: this.state.year, 
+                       onChange: this.changeInput}
+                    ), 
+                React.createElement("label", {className: "mdl-textfield__label"}, "Год премьеры..."), 
+                React.createElement("span", {className: "mdl-textfield__error"}, "Только число!")
+            ), 
+
+            React.createElement("div", {className: "mdl-textfield time mdl-js-textfield mdl-textfield--floating-label"}, 
+                React.createElement("input", {className: "mdl-textfield__input", 
+                       type: "text", 
+                       pattern: "-?[0-9]*(\\.[0-9]+)?", 
+                       id: "time", 
+                       name: "time", 
+                       value: this.state.time, 
+                       onChange: this.changeInput}
+                    ), 
+                React.createElement("label", {className: "mdl-textfield__label"}, "Продолжительность..."), 
+                React.createElement("span", {className: "mdl-textfield__error"}, "Только число!")
+            ), 
+            React.createElement("br", null), 
+
+            React.createElement("div", {className: "mdl-textfield director mdl-js-textfield mdl-textfield--floating-label"}, 
+                React.createElement("input", {className: "mdl-textfield__input", 
+                       type: "text", 
+                       id: "director", 
+                       name: "director", 
+                       value: this.state.director, 
+                       onChange: this.changeInput}
+                    ), 
+                React.createElement("label", {className: "mdl-textfield__label"}, "Режисёр...")
+            ), 
+
+            React.createElement("div", {className: "mdl-textfield rating mdl-js-textfield mdl-textfield--floating-label"}, 
+                React.createElement("input", {className: "mdl-textfield__input", 
+                       type: "text", 
+                       id: "rating", 
+                       name: "rating", 
+                       value: this.state.rating, 
+                       onChange: this.changeInput}
+                    ), 
+                React.createElement("label", {className: "mdl-textfield__label"}, "Рейтинг...")
+            ), 
+
+            React.createElement("div", {className: "mdl-textfield mdl-js-textfield mdl-textfield--floating-label"}, 
+                React.createElement("button", {className: "mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect", type: "submit"}, 
+                    "Добавить фильм"
+                )
+            )
         );
     }
 });
@@ -232,69 +446,6 @@ const Line = React.createClass({displayName: "Line",
  * Рендер таблицы на страницу
  */
 React.render(
-    React.createElement(ItemsList, {type: "min"}),
+    React.createElement(ItemsList, {type: "big"}),
     document.querySelector('.page-content')
-);
-
-
-/**
- * Компонент левого меню
- */
-const Menu = React.createClass({displayName: "Menu",
-    render: function () {
-        var data = [
-            {id: 0, text: 'Полный список', type: 'big'},
-            {id: 1, text: 'Короткий список', type: 'min'}
-        ];
-
-        var items = data.map(function (item) {
-            return React.createElement(MenuLink, {key: item.id, text: item.text, type: item.type})
-        });
-
-        return React.createElement("nav", {className: "mdl-navigation"}, 
-            items
-        )
-    }
-});
-
-/**
- * Пункт левого меню
- */
-const MenuLink = React.createClass({displayName: "MenuLink",
-
-    tableRender: function (e) {
-        var type = e.target.getAttribute('data-type');
-
-        /**
-         * Скрываем всплывающее меню
-         */
-        document.querySelector('.mdl-layout__obfuscator').click();
-
-        /**
-         * Ререндер таблицы
-         */
-        React.render(
-            React.createElement(ItemsList, {type: type}),
-            document.querySelector('.page-content')
-        );
-        e.preventDefault();
-    },
-
-    /**
-     * Событие на пункт меню после рендер
-     */
-    componentDidMount: function () {
-        this.getDOMNode().addEventListener('click', this.tableRender);
-    },
-    render: function () {
-        return React.createElement("a", {className: "mdl-navigation__link", "data-type": this.props.type, href: "#"}, this.props.text);
-    }
-});
-
-/**
- * Рендер левого меню
- */
-React.render(
-    React.createElement(Menu, null),
-    document.querySelector('.mdl-layout__drawer')
 );
