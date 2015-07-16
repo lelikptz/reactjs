@@ -139,7 +139,7 @@ var ItemsList = React.createClass({displayName: "ItemsList",
         var newItem = {
             id: this.state.items.length + 1,
             name: obj.name,
-            year: obj.year,
+            year: parseInt(obj.year),
             time: obj.time,
             director: obj.director,
             rating: obj.rating
