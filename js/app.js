@@ -213,8 +213,7 @@ var ItemsList = React.createClass({displayName: "ItemsList",
          */
         if (filter.length > 0) {
             data = data.filter(function (e) {
-                var name = e.name.substr(0, filter.length).toLowerCase();
-                if (filter.toLowerCase() === name) {
+                if (e.name.toLowerCase().indexOf(filter.toLowerCase()) + 1) {
                     return true;
                 }
             });
@@ -320,6 +319,56 @@ var Line = React.createClass({displayName: "Line",
  */
 var Form = React.createClass({displayName: "Form",
 
+    getInputsData: function () {
+        return [
+            {
+                id: 0,
+                name: 'name',
+                pattern: '*+',
+                value: this.state.name,
+                handle: this.changeInput,
+                label: 'Название',
+                error: ''
+            },
+            {
+                id: 1,
+                name: 'year',
+                pattern: '-?[0-9]*(\\.[0-9]+)?',
+                value: this.state.year,
+                handle: this.changeInput,
+                label: 'Год премьеры',
+                error: 'Только число!'
+            },
+            {
+                id: 2,
+                name: 'time',
+                pattern: '-?[0-9]*(\\.[0-9]+)?',
+                value: this.state.time,
+                handle: this.changeInput,
+                label: 'Продолжительность',
+                error: 'Только число!'
+            },
+            {
+                id: 3,
+                name: 'director',
+                pattern: '*+',
+                value: this.state.director,
+                handle: this.changeInput,
+                label: 'Режисёр',
+                error: ''
+            },
+            {
+                id: 4,
+                name: 'rating',
+                pattern: '*+',
+                value: this.state.rating,
+                handle: this.changeInput,
+                label: 'Рейтинг',
+                error: ''
+            }
+        ];
+    },
+
     /**
      * Значения по умолчанию
      * @returns {{name: string, year: string, time: string, director: string, rating: string}}
@@ -394,72 +443,39 @@ var Form = React.createClass({displayName: "Form",
      * Вёрстка формы
      */
     render: function () {
+        var inputData = this.getInputsData();
+        var inputs = inputData.map(function (item) {
+            return React.createElement(FormInput, {key: item.id, data: item})
+        });
+
         return React.createElement("form", {action: "", method: "post", onSubmit: this.formSubmit, className: "add"}, 
-            React.createElement("div", {className: "mdl-textfield name mdl-js-textfield mdl-textfield--floating-label"}, 
-                React.createElement("input", {className: "mdl-textfield__input", 
-                       type: "text", 
-                       id: "name", 
-                       name: "name", 
-                       value: this.state.name, 
-                       onChange: this.changeInput}
-                    ), 
-                React.createElement("label", {className: "mdl-textfield__label"}, "Название...")
-            ), 
-
-            React.createElement("div", {className: "mdl-textfield year mdl-js-textfield mdl-textfield--floating-label"}, 
-                React.createElement("input", {className: "mdl-textfield__input", 
-                       type: "text", 
-                       id: "year", 
-                       name: "year", 
-                       pattern: "-?[0-9]*(\\.[0-9]+)?", 
-                       value: this.state.year, 
-                       onChange: this.changeInput}
-                    ), 
-                React.createElement("label", {className: "mdl-textfield__label"}, "Год премьеры..."), 
-                React.createElement("span", {className: "mdl-textfield__error"}, "Только число!")
-            ), 
-
-            React.createElement("div", {className: "mdl-textfield time mdl-js-textfield mdl-textfield--floating-label"}, 
-                React.createElement("input", {className: "mdl-textfield__input", 
-                       type: "text", 
-                       pattern: "-?[0-9]*(\\.[0-9]+)?", 
-                       id: "time", 
-                       name: "time", 
-                       value: this.state.time, 
-                       onChange: this.changeInput}
-                    ), 
-                React.createElement("label", {className: "mdl-textfield__label"}, "Продолжительность..."), 
-                React.createElement("span", {className: "mdl-textfield__error"}, "Только число!")
-            ), 
-            React.createElement("br", null), 
-
-            React.createElement("div", {className: "mdl-textfield director mdl-js-textfield mdl-textfield--floating-label"}, 
-                React.createElement("input", {className: "mdl-textfield__input", 
-                       type: "text", 
-                       id: "director", 
-                       name: "director", 
-                       value: this.state.director, 
-                       onChange: this.changeInput}
-                    ), 
-                React.createElement("label", {className: "mdl-textfield__label"}, "Режисёр...")
-            ), 
-
-            React.createElement("div", {className: "mdl-textfield rating mdl-js-textfield mdl-textfield--floating-label"}, 
-                React.createElement("input", {className: "mdl-textfield__input", 
-                       type: "text", 
-                       id: "rating", 
-                       name: "rating", 
-                       value: this.state.rating, 
-                       onChange: this.changeInput}
-                    ), 
-                React.createElement("label", {className: "mdl-textfield__label"}, "Рейтинг...")
-            ), 
-
+            inputs, 
             React.createElement("div", {className: "mdl-textfield mdl-js-textfield mdl-textfield--floating-label"}, 
                 React.createElement("button", {className: "mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect", type: "submit"}, 
                     "Добавить фильм"
                 )
             )
+        );
+    }
+});
+
+/**
+ * Рендер input'а формы
+ */
+var FormInput = React.createClass({displayName: "FormInput",
+    render: function () {
+        var strClass = "mdl-textfield mdl-js-textfield mdl-textfield--floating-label " + this.props.data.name;
+        return React.createElement("div", {className: strClass}, 
+            React.createElement("input", {className: "mdl-textfield__input", 
+                   type: "text", 
+                   id: this.props.data.name, 
+                   pattern: this.props.data.pattern, 
+                   name: this.props.data.name, 
+                   value: this.props.data.value, 
+                   onChange: this.props.data.handle}
+                ), 
+            React.createElement("label", {className: "mdl-textfield__label"}, this.props.data.label, "..."), 
+            React.createElement("span", {className: "mdl-textfield__error"}, this.props.data.error)
         );
     }
 });
