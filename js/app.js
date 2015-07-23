@@ -144,9 +144,15 @@ var ItemsList = React.createClass({displayName: "ItemsList",
             director: obj.director,
             rating: obj.rating
         };
-        var newState = this.state.items;
-        newState.push(newItem);
-        this.setState({items: newState});
+
+        /**
+         * Аддон для изменения state
+         */
+        var newState = React.addons.update(
+            this.state, {items: {$push: [newItem]}}
+        );
+
+        this.setState(newState);
     },
 
     /**
@@ -375,10 +381,9 @@ var Form = React.createClass({displayName: "Form",
      */
     getInitialState: function () {
 
-        var state = {};
-        if (typeof localStorage.form == 'undefined') {
-            state = {name: '', year: '', time: '', director: '', rating: ''};
-        } else {
+        var state = {name: '', year: '', time: '', director: '', rating: ''};
+
+        if (typeof localStorage.form !== 'undefined') {
             state = JSON.parse(localStorage.form);
         }
         return state;
@@ -395,8 +400,9 @@ var Form = React.createClass({displayName: "Form",
      */
     changeInput: function (e) {
         document.querySelector('.mdl-textfield.' + e.target.name).classList.remove('react-invalid');
-        var stateObj = {};
-        stateObj[e.target.name] = e.target.value;
+        var stateObj = React.addons.update(this.state, {
+            [e.target.name]:{$set: e.target.value}
+        });
         this.setState(stateObj);
     },
     /**
@@ -409,9 +415,11 @@ var Form = React.createClass({displayName: "Form",
             /**
              * Если input пустой, то добавляем класс react-invalid и не даём отправить форму
              */
-            if (this.state[prop].trim() === '') {
-                document.querySelector('.mdl-textfield.' + prop).classList.add('react-invalid');
-                error = true;
+            if (this.state.hasOwnProperty(prop)) {
+                if (this.state[prop].trim() === '') {
+                    document.querySelector('.mdl-textfield.' + prop).classList.add('react-invalid');
+                    error = true;
+                }
             }
         }
 
