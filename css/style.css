@@ -111,3 +111,16 @@ html, body {
 .mdl-data-table td.mdl-data-table__cell--center {
     text-align: center;
 }
+
+.pagination {
+    width: 720px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.pagination a {
+    background-color: #fbfbfb;
+    margin: 0 10px;
+    width: 36px;
+    min-width: 36px;
+}

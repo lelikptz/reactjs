@@ -1,9 +1,86 @@
 'use strict';
 
 /**
- * Основной компонент формируем таблицу
+ * Основной компонент
+ */
+var App = React.createClass({
+
+    getInitialState: function () {
+        return {value: ''};
+    },
+    search: function (e) {
+        this.setState({value: e.target.value});
+    },
+    reset: function() {
+        this.setState({value: ''});
+    },
+    render: function () {
+
+        var search = this.state.value;
+
+        return <div className="mdl-layout mdl-layout--overlay-drawer-button">
+            <header className="mdl-layout__header mdl-layout__header--scroll">
+                <div className="mdl-layout__header-row">
+                    <span className="mdl-layout-title">React js</span>
+
+                    <div className="mdl-layout-spacer"></div>
+                    Поиск по названию:&nbsp;&nbsp;
+                    <div className="search">
+                        <Search value={search} handle={this.search} />
+                    </div>
+                </div>
+            </header>
+            <main className="mdl-layout__content">
+                <div className="page-content">
+                    <ItemsList filter={search} reset={this.reset} />
+                </div>
+            </main>
+        </div>;
+    }
+});
+
+
+/**
+ *  Формируем таблицу
  */
 var ItemsList = React.createClass({
+
+    /**
+     * Количество элементов на странице
+     */
+    countOnPage: 5,
+
+    /**
+     * Это выполняется перед функцией render. Возвращаемый объект присваивается в this.state
+     */
+    getInitialState: function () {
+        var state = {};
+        if (typeof localStorage.itemlist == 'undefined') {
+            return {sort: 'id', direction: 'asc', items: this.getDataFromServer(), activePage: 1};
+        } else {
+            state = JSON.parse(localStorage.itemlist);
+        }
+        return state;
+    },
+
+    /**
+     * вызывается react'ом, когда компонент был отрисован на странице
+     */
+    componentDidMount: function () {
+
+        /**
+         * Перебераем все th таблицы и вешаем на них события
+         */
+        [].forEach.call(document.querySelectorAll('th'), this.addEvent);
+        localStorage.itemlist = JSON.stringify(this.state);
+    },
+
+    /**
+     * вызывается react'ом, когда компонент был перерисован
+     */
+    componentDidUpdate: function () {
+        localStorage.itemlist = JSON.stringify(this.state);
+    },
 
     /**
      * Получаем данные с сервера
@@ -156,54 +233,31 @@ var ItemsList = React.createClass({
     },
 
     /**
+     * Смена страницы
+     */
+    changePage: function (page) {
+        var newState = React.addons.update(
+            this.state, {activePage: {$set: page}}
+        );
+        this.setState(newState);
+    },
+
+    /**
+     * Обрезаем массив с данными взависимости от количества строк на странице и активной страницы
+     */
+    cropDataByPage: function (data, page) {
+        return data.slice(page * this.countOnPage - this.countOnPage, page * this.countOnPage);
+    },
+
+    /**
      * Очищаем localStorage и загружаем дефолтный state
      */
     resetLocal: function () {
         localStorage.removeItem('itemlist');
+        localStorage.removeItem('form');
+        this.props.reset();
         this.replaceState(this.getInitialState());
     },
-
-    /**
-     * Это выполняется перед функцией render. Возвращаемый объект присваивается в this.state
-     * Данные получаем из localStorage если они там есть
-     */
-    getInitialState: function () {
-        var state = {};
-        if (typeof localStorage.itemlist == 'undefined') {
-            state = {sort: 'id', direction: 'asc', items: this.getDataFromServer()};
-        } else {
-            state = JSON.parse(localStorage.itemlist);
-        }
-        return state;
-    },
-
-    /**
-     * вызывается react'ом, когда компонент был отрисован на странице
-     */
-    componentDidMount: function () {
-
-        /**
-         * Перебераем все th таблицы и вешаем на них события
-         */
-        [].forEach.call(document.querySelectorAll('th'), this.addEvent);
-
-        /**
-         * Сохраняем state в localStorage
-         */
-        localStorage.itemlist = JSON.stringify(this.state);
-    },
-
-    /**
-     * вызывается react'ом, когда компонент был перерисован
-     */
-    componentDidUpdate: function () {
-
-        /**
-         * Сохраняем state в localStorage
-         */
-        localStorage.itemlist = JSON.stringify(this.state);
-    },
-
     /**
      * Отображение
      */
@@ -239,6 +293,34 @@ var ItemsList = React.createClass({
          * Сортируем объекты
          */
         data.sort(this.sorting);
+
+        /**
+         * Активная страница
+         */
+        var count = Math.ceil(((data.length) / this.countOnPage));
+        var activePage = this.state.activePage;
+        if (this.state.activePage > count) {
+            activePage = count;
+        }
+
+        /**
+         * Фоомируем массив объектов для паджинации
+         */
+        var pages = [];
+        if (count > 1) {
+            for (var i = 1; i <= count; i++) {
+                var buttonClass = 'mdl-button mdl-js-button';
+                if (i === activePage) {
+                    buttonClass += ' mdl-button--raised mdl-button--colored';
+                }
+                pages.push({'id': i, 'class': buttonClass});
+            }
+        }
+
+        /**
+         * Обрезаем массив
+         */
+        data = this.cropDataByPage(data, activePage);
 
         if (data.length) {
             /**
@@ -295,9 +377,11 @@ var ItemsList = React.createClass({
                 </thead>
                 <tbody>{lines}</tbody>
             </table>
+            <Pagination count={pages} changePage={this.changePage}/>
+
             <div className="bottom-button">
                 <button className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect align-center" onClick={this.resetLocal}>
-                    Вернуть первоначальный список
+                    Сбросить
                 </button>
             </div>
         </div>;
@@ -394,14 +478,13 @@ var Form = React.createClass({
     componentDidUpdate: function () {
         localStorage.form = JSON.stringify(this.state);
     },
-
     /**
      * При изменения значения input меняем state
      */
     changeInput: function (e) {
         document.querySelector('.mdl-textfield.' + e.target.name).classList.remove('react-invalid');
         var stateObj = React.addons.update(this.state, {
-            [e.target.name]:{$set: e.target.value}
+            [e.target.name]: {$set: e.target.value}
         });
         this.setState(stateObj);
     },
@@ -447,9 +530,6 @@ var Form = React.createClass({
 
     },
 
-    /**
-     * Вёрстка формы
-     */
     render: function () {
         var inputData = this.getInputsData();
         var inputs = inputData.map(function (item) {
@@ -492,21 +572,6 @@ var FormInput = React.createClass({
  * Поиск
  */
 var Search = React.createClass({
-    getInitialState: function () {
-        return {value: ''};
-    },
-    changeInput: function (e) {
-        var val = e.target.value;
-        this.setState({value: val});
-
-        /**
-         * todo наверняка можно как-то по изящнее
-         */
-        React.render(
-            <ItemsList filter={val}/>,
-            document.querySelector('.page-content')
-        );
-    },
     render: function () {
         return <div className="mdl-textfield mdl-js-textfield mdl-textfield--expandable">
             <label className="mdl-button mdl-js-button mdl-button--icon" htmlFor="search">
@@ -515,11 +580,11 @@ var Search = React.createClass({
 
             <div className="mdl-textfield__expandable-holder">
                 <input
-                    className="mdl-textfield__input"
+                    className="mdl-textfield__input search-input"
                     type="text"
                     id="search"
-                    value={this.state.value}
-                    onChange={this.changeInput}
+                    value={this.props.value}
+                    onChange={this.props.handle}
                     />
             </div>
         </div>
@@ -527,17 +592,39 @@ var Search = React.createClass({
 });
 
 /**
- * Рендер поиска
+ * Пагинация
  */
-React.render(
-    <Search />,
-    document.querySelector('.search')
-);
+var Pagination = React.createClass({
+    getInitialState: function () {
+        return null;
+    },
+    click: function (e) {
+        e.preventDefault();
+        this.props.changePage(parseInt(e.target.firstChild.nodeValue));
+    },
+    addEvent: function (el) {
+        el.addEventListener('click', this.click);
+    },
+    /**
+     * Навешиваем клик при первоначальной отрисовки и при добавлении нового элемента
+     */
+    componentDidMount: function () {
+        [].forEach.call(this.getDOMNode().querySelectorAll('a'), this.addEvent);
+    },
+    componentDidUpdate: function () {
+        [].forEach.call(this.getDOMNode().querySelectorAll('a'), this.addEvent);
+    },
+    render: function () {
+        var pages = this.props.count.map(function (item) {
+            return <a href="#" key={item.id} className={item.class}>{item.id}</a>;
+        });
+        return <div className="pagination">
+            {pages}
+        </div>
+    }
+});
 
-/**
- * Рендер таблицы на страницу
- */
 React.render(
-    <ItemsList filter=''/>,
-    document.querySelector('.page-content')
+    <App />,
+    document.querySelector('.body')
 );
